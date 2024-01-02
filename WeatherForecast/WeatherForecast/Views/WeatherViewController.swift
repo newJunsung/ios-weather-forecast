@@ -20,6 +20,7 @@ class WeatherViewController: UIViewController {
     private var weatherDataSource: UICollectionViewDiffableDataSource<Section, Forecast>!
     private var collectionHeaderRegisteration: UICollectionView.SupplementaryRegistration<WeatherCollectionViewHeader>!
     private var collectionCellRegisteration: UICollectionView.CellRegistration<WeatherCollectionViewCell, Forecast>!
+    private var coordinate: (lat: Double?, lon: Double?)
     
     private lazy var backgroundImage: UIImageView = {
         let image = UIImageView()
@@ -61,7 +62,11 @@ class WeatherViewController: UIViewController {
     @objc
     private func handleRefreshControl() {
         refreshWeather.beginRefreshing()
-        locationManager.locationManger.requestLocation()
+        if let lat = coordinate.lat, let lon = coordinate.lon {
+            locationManager.getAddress(from: CLLocationCoordinate2D(latitude: lat, longitude: lon))
+        } else {
+            locationManager.requestLocation()
+        }
         refreshWeather.endRefreshing()
     }
     
@@ -105,6 +110,35 @@ class WeatherViewController: UIViewController {
         }
     }
     
+    @objc
+    func addressSettingButtonTapped(_ sender: UIButton) {
+        let alert = UIAlertController(title: "위치변경", message: "변경할 좌표를 선택해주세요", preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "변경", style: .destructive, handler: { [self] _ in
+            guard let latText = alert.textFields?[0].text, let lonText = alert.textFields?[1].text,
+                  let lat = Double(latText), let lon = Double(lonText) else { return }
+            self.coordinate = (lat, lon)
+            let loaction = CLLocationCoordinate2D(latitude: lat , longitude: lon)
+            self.locationManager.getAddress(from: loaction)
+        })
+        let currentLocationWeatherAction = UIAlertAction(title: "현재 위치로 재설정", style: .default, handler: { [self] _ in
+            locationManager.requestLocation()
+            debugPrint("날씨가 새로고침 됨.")
+        })
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+        
+        alert.addActions([okAction, currentLocationWeatherAction, cancelAction])
+        
+        alert.addTextField() { (textField) in
+            textField.placeholder = "위도"
+            textField.keyboardType = .decimalPad
+        }
+        alert.addTextField() { (textField) in
+            textField.placeholder = "경도"
+            textField.keyboardType = .decimalPad
+        }
+        self.present(alert, animated: true, completion: nil)
+    }
+    
     func bind() {
         $weatherInfo
             .receive(on: DispatchQueue.main)
@@ -138,6 +172,7 @@ class WeatherViewController: UIViewController {
 
 extension WeatherViewController: WeatherUIDelegate {
     func updateLocationWeather(_ coordinate: CLLocationCoordinate2D, _ addressString: String) {
+        self.coordinate = (coordinate.latitude, coordinate.longitude)
         let urlManager = WeatherURLManager()
         guard let weatherURLRequest = urlManager.configureURLRequest(lat: coordinate.latitude, lon: coordinate.longitude, apiType: .weather) else { return }
         guard let forecastURLRequest = urlManager.configureURLRequest(lat: coordinate.latitude, lon: coordinate.longitude, apiType: .forecast) else { return }

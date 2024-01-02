@@ -101,7 +101,7 @@ struct City: Decodable {
 
 struct Forecast: Decodable, Hashable {
     static func == (lhs: Forecast, rhs: Forecast) -> Bool {
-        lhs.timeOfData == rhs.timeOfData
+        return lhs.timeOfData == rhs.timeOfData && lhs.mainInfo.temperature == rhs.mainInfo.temperature
     }
     
     func hash(into hasher: inout Hasher) {

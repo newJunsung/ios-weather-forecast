@@ -41,11 +41,31 @@ class WeatherCollectionViewHeader: UICollectionReusableView {
         return stackView
     }()
     
+    private lazy var addressStackView: UIStackView = {
+        let stackView = UIStackView()
+         stackView.axis = .horizontal
+         stackView.alignment = .fill
+         stackView.distribution = .fill
+         stackView.spacing = 2
+         stackView.translatesAutoresizingMaskIntoConstraints = false
+         return stackView
+    }()
+    
     private lazy var addressLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .left
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         return label
+    }()
+    
+    private lazy var addressSettingButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("위치설정", for: .normal)
+        button.setTitleColor(UIColor.white, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(.none, action: #selector(WeatherViewController().addressSettingButtonTapped(_:)), for: .touchUpInside)
+        return button
     }()
     
     private lazy var minMaxTemperatureLabel: UILabel = {
@@ -74,7 +94,8 @@ class WeatherCollectionViewHeader: UICollectionReusableView {
     }
     
     private func setUpLayouts() {
-        verticallStackView.addArrangedSubviews([addressLabel, minMaxTemperatureLabel, temperatureLabel])
+        addressStackView.addArrangedSubviews([addressLabel, addressSettingButton])
+        verticallStackView.addArrangedSubviews([addressStackView, minMaxTemperatureLabel, temperatureLabel])
         horizontalStackView.addArrangedSubviews([weatherIcon, verticallStackView])
         addSubview(horizontalStackView)
     }
